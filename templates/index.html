@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sentiment Analysis App</title>
+  <style>
+    body {
+      font-family: Poppins, sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      margin: 0;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 20px;
+      width: 420px;
+      text-align: center;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    input, button {
+      width: 90%;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    button {
+      background: #00c6ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #0072ff;
+    }
+    #result {
+      margin-top: 20px;
+    }
+    #error {
+      margin-top: 10px;
+      color: #ffcccc;
+      font-size: 0.9rem;
+    }
+    .secondary-btn {
+      background: transparent;
+      border: 1px solid #ffffffaa;
+      margin-top: 15px;
+      width: auto;
+      padding: 8px 16px;
+    }
+    .secondary-btn:hover {
+      background: #ffffff22;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Twitter Sentiment Analyzer</h2>
+    <input type="text" id="userText" placeholder="Type a tweet...">
+    <button onclick="analyzeSentiment()">Analyze</button>
+    <h3 id="result"></h3>
+    <div id="error"></div>
+
+    <button class="secondary-btn" onclick="goToHistory()">View History</button>
+  </div>
+
+  <script>
+    async function analyzeSentiment() {
+      const textInput = document.getElementById("userText");
+      const resultEl = document.getElementById("result");
+      const errorEl = document.getElementById("error");
+
+      const text = textInput.value.trim();
+      resultEl.innerText = "";
+      errorEl.innerText = "";
+
+      if (!text) {
+        errorEl.innerText = "Please type something first.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error("Server error:", errText);
+          errorEl.innerText = "Server error. Check backend logs.";
+          return;
+        }
+
+        const data = await res.json();
+        if (data.sentiment) {
+          resultEl.innerText = "Predicted Sentiment: " + data.sentiment;
+        } else if (data.error) {
+          errorEl.innerText = data.error;
+        } else {
+          errorEl.innerText = "Unexpected response from server.";
+        }
+      } catch (e) {
+        console.error("Fetch error:", e);
+        errorEl.innerText = "Unable to connect to server.";
+      }
+    }
+
+    function goToHistory() {
+      window.location.href = "/history";
+    }
+  </script>
+</body>
+</html>
